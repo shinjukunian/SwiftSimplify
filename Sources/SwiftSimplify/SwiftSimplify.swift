@@ -66,7 +66,7 @@ public enum SwiftSimplify {
             }
         }
         
-        if prevPoint.equalsTo(currentPoint) == false {
+        if prevPoint != currentPoint{
             newPoints.append(currentPoint)
         }
         

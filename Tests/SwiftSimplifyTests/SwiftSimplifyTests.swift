@@ -10,32 +10,33 @@ import Foundation
 import XCTest
 import SwiftSimplify
 
+
+struct TestCase:Decodable{
+    let tolerance:Float
+    let points:[[Float]]
+    let simplified:[[Float]]
+    
+    func cgPoints(pointsArray:[[Float]])->[CGPoint]{
+        return pointsArray.map({return CGPoint(x: Double($0[0]), y: Double($0[1]))})
+    }
+    
+}
+
+
 class SwiftSimplifyTests: XCTestCase {
    
     /// The following test ensure simplification works as expected.
     /// The original version was in JS and can be found:
     /// https://mourner.github.io/simplify-js/
-    func testSimplifyPoints() {
-        let url = Bundle(for: SwiftSimplifyTests.self).path(forResource: "SimplifyTestPoints", ofType: "json")!
-        guard let tests = NSArray(contentsOfFile: url) else {
-            return
-        }
-        
-        let pointsConversionMapFunction: ((Any) -> CGPoint?) = { point in
-            guard let point = point as? NSArray else {
-                return nil
-            }
-            return CGPoint(x: CGFloat((point[0] as! NSNumber).floatValue),
-                           y: CGFloat((point[1] as! NSNumber).floatValue))
-        }
-        
-        for test in tests {
-            guard let test = test as? NSDictionary else {
-                continue
-            }
-            let points = (test["points"] as! NSArray).compactMap(pointsConversionMapFunction)
-            let simplifiedPoints = (test["simplified"] as! NSArray).compactMap(pointsConversionMapFunction)
-            let tolerance = (test["tolerance"] as! NSNumber).floatValue
+    func testSimplifyPoints() throws {
+        let url = Bundle.module.url(forResource: "SimplifyTestPoints", withExtension: "json")!
+        let data = try Data(contentsOf: url)
+        let cases=try JSONDecoder().decode([TestCase].self, from: data)
+
+        for test in cases {
+            let points = test.cgPoints(pointsArray: test.points)
+            let simplifiedPoints = test.cgPoints(pointsArray: test.simplified)
+            let tolerance = test.tolerance
             executeTestForPoints(points, simplified: simplifiedPoints, tolerance: tolerance)
         }
         
@@ -49,14 +50,11 @@ class SwiftSimplifyTests: XCTestCase {
         }
         
         for i in 0..<algorithmResult.count {
-            guard algorithmResult[i].equalsTo(simplified[i]) else {
+            guard algorithmResult[i] == simplified[i] else {
                 XCTFail("Failed to simplify; expected point \(algorithmResult[i]), expected \(simplified[i])")
                 return
             }
         }
     }
     
-    static var allTests = [
-        ("testSimplifyPoints", testSimplifyPoints),
-    ]
 }

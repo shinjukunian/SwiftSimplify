@@ -30,10 +30,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import UIKit
+import CoreGraphics
 import CoreLocation
 
-public protocol Point2DRepresentable {
+public protocol Point2DRepresentable:Equatable {
     var xValue: Float { get }
     var yValue: Float { get }
     
@@ -42,14 +42,9 @@ public protocol Point2DRepresentable {
     func distanceFrom(_ otherPoint: Self) -> Float
     func distanceToSegment(_ p1: Self, _ p2: Self) -> Float
     
-    func equalsTo(_ compare: Self) -> Bool
 }
 
 public extension Point2DRepresentable {
-    
-    func equalsTo(_ compare: Self) -> Bool {
-        xValue == compare.xValue && yValue == compare.yValue
-    }
     
     func distanceFrom(_ otherPoint: Self) -> Float {
         let dx = xValue - otherPoint.xValue
@@ -83,10 +78,15 @@ public extension Point2DRepresentable {
 }
 
 extension CLLocationCoordinate2D: Point2DRepresentable {
+    
     public var xValue: Float { Float(latitude) }
     public var yValue: Float { Float(longitude) }
     
     public var cgPoint: CGPoint { CGPoint(x: latitude, y: longitude) }
+    
+    public static func == (lhs: CLLocationCoordinate2D, rhs: CLLocationCoordinate2D) -> Bool {
+        return lhs.cgPoint == rhs.cgPoint
+    }
 }
 
 extension CGPoint: Point2DRepresentable {
